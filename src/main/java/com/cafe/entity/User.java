@@ -1,4 +1,4 @@
-package com.cafe.pojo;
+package com.cafe.entity;
 
 
 import lombok.*;

@@ -1,9 +1,7 @@
 package com.cafe.mapper;
 
 
-import com.cafe.pojo.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.factory.Mappers;
+import com.cafe.entity.User;
 
 import java.util.List;
 

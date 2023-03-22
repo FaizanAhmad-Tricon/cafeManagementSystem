@@ -4,13 +4,11 @@ package com.cafe.service;
 import com.cafe.constent.CafeConstents;
 import com.cafe.dao.UserRepository;
 import com.cafe.jwt.*;
-
 import com.cafe.mapper.ChangePassword;
 import com.cafe.mapper.ForgotPassword;
 import com.cafe.mapper.UserMapperImp;
-import com.cafe.pojo.User;
+import com.cafe.entity.User;
 import com.cafe.utils.CafeUtils;
-
 import com.cafe.utils.EmailUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -23,9 +21,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-
-
-
 
 
 @Slf4j
@@ -51,76 +46,63 @@ public class UserService {
     EmailUtil emailUtil;
 
 
-   @Autowired
+    @Autowired
     JwtFilter jwtFilter;
 
 
     @Autowired
     JwtUtil jwtUtil;
+
     //Signup
-    public ResponseEntity<String> signUp(Map<String, String> requestMap)
-    {
+    public ResponseEntity<String> signUp(Map<String, String> requestMap) {
 
 
-         try
-         {
+        try {
 
-             if(ValidateSignUpMap(requestMap))
-             {
+            if (ValidateSignUpMap(requestMap)) {
 
 
-                 User   user = userRepository.findByEmail(requestMap.get("email"));
-                 if(Objects.isNull(user))
-                 {
+                User user = userRepository.findByEmail(requestMap.get("email"));
+                if (Objects.isNull(user)) {
 
-                     userRepository.save(getUserFromMap(requestMap));
+                    userRepository.save(getUserFromMap(requestMap));
 
-                     return CafeUtils.getResponseEntity("Successfully Registered",HttpStatus.OK
-                     );
-
-
-                 }else {
-                     return  CafeUtils.getResponseEntity("Email already Exist", HttpStatus.BAD_REQUEST);
-                 }
+                    return CafeUtils.getResponseEntity("Successfully Registered", HttpStatus.OK
+                    );
 
 
-             }
-             else {
-                 return CafeUtils.getResponseEntity(CafeConstents.INVALID_DATA, HttpStatus.BAD_REQUEST);
-             }
-
-         }
-         catch (Exception ex)
-         {
-             ex.printStackTrace();
-         }
+                } else {
+                    return CafeUtils.getResponseEntity("Email already Exist", HttpStatus.BAD_REQUEST);
+                }
 
 
-         return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+            } else {
+                return CafeUtils.getResponseEntity(CafeConstents.INVALID_DATA, HttpStatus.BAD_REQUEST);
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
 
-
+        return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
 
     }
 
 
-
-    private boolean ValidateSignUpMap(Map<String,String > requestMap)
-    {
+    private boolean ValidateSignUpMap(Map<String, String> requestMap) {
 
 
-      return  requestMap.containsKey("name") && requestMap.containsKey("email")
+        return requestMap.containsKey("name") && requestMap.containsKey("email")
                 && requestMap.containsKey("password") && requestMap.containsKey("contactNumber")
-              ? true :false;
+                ? true : false;
 
 
     }
 
 
-
-    private User getUserFromMap(Map<String,String>  requestMap)
-    {
+    private User getUserFromMap(Map<String, String> requestMap) {
         User user = new User();
         user.setName(requestMap.get("name"));
         user.setEmail(requestMap.get("email"));
@@ -129,210 +111,176 @@ public class UserService {
         user.setContactNumber(requestMap.get("contactNumber"));
         user.setStatus("false");
 
-        return  user;
+        return user;
     }
 
 
-
-
-
 //signUp End
-
-
-
-
 
 
     //login
     public ResponseEntity<?> login(Map<String, String> requestMap) {
 
 
+        try {
+            Authentication auth = securityConfig.authenticationManagerBean().authenticate(new UsernamePasswordAuthenticationToken(requestMap.get("email"), requestMap.get("password")));
+            if (auth.isAuthenticated()) {
 
-        try
-        {
-           Authentication auth =  securityConfig.authenticationManagerBean().authenticate( new UsernamePasswordAuthenticationToken(requestMap.get("email"),requestMap.get("password")));
-             if(auth.isAuthenticated())
-            {
+                System.out.print(customerUserDetailsService.getUserDetail().getStatus());
 
-            System.out.print(customerUserDetailsService.getUserDetail().getStatus());
-
-               if(customerUserDetailsService.getUserDetail().getStatus().equals("true"))
-               {
+                if (customerUserDetailsService.getUserDetail().getStatus().equals("true")) {
 
 
-                   return   new ResponseEntity<>(
-                          " {\"token\":\""+ jwtUtil.generateToken(customerUserDetailsService.
-                                          getUserDetail().getEmail()
-                                  ,customerUserDetailsService.
-                                          getUserDetail().getRole()) + "\"}", HttpStatus.OK
+                    return new ResponseEntity<>(
+                            " {\"token\":\"" + jwtUtil.generateToken(customerUserDetailsService.
+                                            getUserDetail().getEmail()
+                                    , customerUserDetailsService.
+                                            getUserDetail().getRole()) + "\"}", HttpStatus.OK
 
 
-                   );
-               }else {
+                    );
+                } else {
 
-                   return new ResponseEntity<>("{\" message \""+ "Wait for admin approval"+ "\"}",
-                           HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<>("{\" message \"" + "Wait for admin approval" + "\"}",
+                            HttpStatus.BAD_REQUEST);
 
-               }
+                }
 
 
             }
 
-        }catch (Exception ex)
-        {
-             ex.printStackTrace();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
-      return  CafeUtils.getResponseEntity( "{\"message\""+"Bad Request"+"\"}",HttpStatus.BAD_REQUEST);
+        return CafeUtils.getResponseEntity("{\"message\"" + "Bad Request" + "\"}", HttpStatus.BAD_REQUEST);
 
     }
-
 
 
     //getAllUser service method
     public ResponseEntity<?> getAllUsers() {
 
-            try
-            {
+        try {
 
-                  if(jwtFilter.isAdmin()){
-                      return  new ResponseEntity<>(
+            if (jwtFilter.isAdmin()) {
+                return new ResponseEntity<>(
 
-                             new  UserMapperImp().toUserResponseList(userRepository.findAll())
+                        new UserMapperImp().toUserResponseList(userRepository.findAll())
 
 
-                              ,HttpStatus.OK);
-                  }else {
-                      return  CafeUtils.getResponseEntity( CafeConstents.UN_AUTHORIZED_ACCESS,HttpStatus.FORBIDDEN);
-                  }
-
-            }catch (Exception  ex)
-            {
-                ex.printStackTrace();
+                        , HttpStatus.OK);
+            } else {
+                return CafeUtils.getResponseEntity(CafeConstents.UN_AUTHORIZED_ACCESS, HttpStatus.FORBIDDEN);
             }
 
-            return   CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG , HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
+        return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
 
     }
 
 
     public ResponseEntity<?> updateStatus(String status, int id) {
-          try
-          {
+        try {
 
-              if(jwtFilter.isAdmin())
-              {
-                   Optional<User> existUser = userRepository.findById(id);
+            if (jwtFilter.isAdmin()) {
+                Optional<User> existUser = userRepository.findById(id);
 
-                   if(existUser.isPresent())
-                   {
+                if (existUser.isPresent()) {
 
 
+                    existUser.get().setStatus(status);
 
 
-                        existUser.get().setStatus(status);
+                    User updatedUser = userRepository.save(existUser.get());
+                    if (updatedUser.getStatus().equalsIgnoreCase("true")) {
+
+                        emailUtil.SendMail(existUser.get().getEmail(), jwtFilter.getCurrentUser(), true, getAllAdmin());
 
 
-                       User updatedUser = userRepository.save(existUser.get());
-                       if(updatedUser.getStatus().equalsIgnoreCase("true"))
-                       {
-
-                           emailUtil.SendMail(existUser.get().getEmail() ,jwtFilter.getCurrentUser(),true,getAllAdmin( ));
+                        return CafeUtils.getResponseEntity("Your Account is Activated by  " + jwtFilter.getCurrentUser(), HttpStatus.OK);
 
 
-                           return  CafeUtils.getResponseEntity("Your Account is Activated by  "+jwtFilter.getCurrentUser(),HttpStatus.OK);
+                    } else {
+
+                        emailUtil.SendMail(existUser.get().getEmail(), jwtFilter.getCurrentUser(), false, getAllAdmin());
+
+                        return CafeUtils.getResponseEntity("Your Account is deActivated by   " + jwtFilter.getCurrentUser(), HttpStatus.OK);
+
+                    }
 
 
-                       }else {
+                }
 
-                           emailUtil.SendMail(existUser.get().getEmail() , jwtFilter.getCurrentUser(),false ,getAllAdmin( ));
+            } else {
 
-                           return  CafeUtils.getResponseEntity("Your Account is deActivated by   "+jwtFilter.getCurrentUser(),HttpStatus.OK);
-
-                       }
-
-
-                   }
-
-              }else {
-
-                  return  CafeUtils.getResponseEntity(CafeConstents.UN_AUTHORIZED_ACCESS,HttpStatus.BAD_REQUEST);
-              }
+                return CafeUtils.getResponseEntity(CafeConstents.UN_AUTHORIZED_ACCESS, HttpStatus.BAD_REQUEST);
+            }
 
 
-
-          }catch (Exception ex)
-          {
-              ex.printStackTrace();
-          }
-        return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 
-    private List<String> getAllAdmin( ) {
+    private List<String> getAllAdmin() {
 
 
-        List<User>  allAdminUserInDB = userRepository.findByRole("ADMIN");
-        List<String>  alladminUser  = new ArrayList<>();
+        List<User> allAdminUserInDB = userRepository.findByRole("ADMIN");
+        List<String> alladminUser = new ArrayList<>();
 
-        for(User user : allAdminUserInDB)
-        {
+        for (User user : allAdminUserInDB) {
             alladminUser.add(user.getEmail());
         }
 
 
-
-        return  alladminUser;
+        return alladminUser;
 
     }
 
 
     public ResponseEntity<?> changePassword(ChangePassword request) {
 
-        try
-        {
+        try {
             User user = userRepository.findByEmail(jwtFilter.getCurrentUser());
 
-            if(!user.equals(null))
-            {
-
+            if (!user.equals(null)) {
 
 
                 System.out.print(request.getOldPassword());
 
 
-                if(passwordEncoder.getPasswordEncoder().matches(request.getOldPassword(), user.getPassword()))
-                {
+                if (passwordEncoder.getPasswordEncoder().matches(request.getOldPassword(), user.getPassword())) {
 
                     user.setPassword(passwordEncoder.getPasswordEncoder().encode(request.getNewPassword()));
                     userRepository.save(user);
 
 
-                    return  CafeUtils.getResponseEntity("password Successfully updated",HttpStatus.OK);
+                    return CafeUtils.getResponseEntity("password Successfully updated", HttpStatus.OK);
 
 
+                } else {
 
-
-                }else {
-
-                    return  CafeUtils.getResponseEntity("OldPassword is incorrect",HttpStatus.BAD_REQUEST);
+                    return CafeUtils.getResponseEntity("OldPassword is incorrect", HttpStatus.BAD_REQUEST);
                 }
 
 
-
-            }else {
-                return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.BAD_REQUEST);
+            } else {
+                return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.BAD_REQUEST);
             }
 
-        }catch (Exception ex)
-            {
-                ex.printStackTrace();
+        } catch (Exception ex) {
+            ex.printStackTrace();
 
-            }
+        }
 
-        return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+        return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
 
     }
@@ -342,35 +290,29 @@ public class UserService {
         try {
 
 
-            User  user = userRepository.findByEmail(forgotPassword.getEmail());
-            if(Objects.nonNull(user) && Strings.isNotEmpty(user.getEmail()))
-            {
+            User user = userRepository.findByEmail(forgotPassword.getEmail());
+            if (Objects.nonNull(user) && Strings.isNotEmpty(user.getEmail())) {
 
 
-                emailUtil.sendForgotPassword(user.getEmail(),user.);
+                //error in this section
+                emailUtil.sendForgotPassword(user.getEmail(), user.getPassword());
 
-                return  CafeUtils.getResponseEntity("Credential is sent to email "+ user.getEmail() +"  please check your email",HttpStatus.BAD_REQUEST);
-
-
-
-
-            }else {
+                return CafeUtils.getResponseEntity("Credential is sent to email " + user.getEmail() + "  please check your email", HttpStatus.BAD_REQUEST);
 
 
-                return  CafeUtils.getResponseEntity("Email is not Registered",HttpStatus.BAD_REQUEST);
+            } else {
+
+
+                return CafeUtils.getResponseEntity("Email is not Registered", HttpStatus.BAD_REQUEST);
 
             }
 
 
-
-
-        }catch (Exception ex)
-        {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
 
-        return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
-
+        return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
 
     }

@@ -1,6 +1,6 @@
 package com.cafe.mapper;
 
-import com.cafe.pojo.User;
+import com.cafe.entity.User;
 
 import java.util.ArrayList;
 import java.util.List;
