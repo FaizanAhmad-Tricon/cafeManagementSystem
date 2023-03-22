@@ -3,6 +3,8 @@ package com.cafe.utils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 public class CafeUtils {
 
 
@@ -13,6 +15,10 @@ public class CafeUtils {
         return new ResponseEntity<>("{\"message\" :\" "+ responseMessag+ "\"",  httpStatus);
 
     }
+
+
+
+
 
 
 }

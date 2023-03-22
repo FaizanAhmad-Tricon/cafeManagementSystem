@@ -3,6 +3,7 @@ package com.cafe.controller;
 
 import com.cafe.constent.CafeConstents;
 import com.cafe.jwt.JwtUtil;
+import com.cafe.mapper.ChangePassword;
 import com.cafe.service.UserService;
 import com.cafe.utils.CafeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.security.Principal;
 import java.util.Map;
 
@@ -99,6 +101,8 @@ public class UserController {
 
 
 
+    //updateStatus
+
     @PutMapping(path = "/updateStatus/status/{status}/id/{id}")
     public ResponseEntity<?>  updateStatus(@PathVariable("status") String status , @PathVariable("id") int id)
     {
@@ -118,6 +122,34 @@ public class UserController {
 
 
 
+    //UpdateStatus End
+
+
+
+
+    //ChangePassword
+
+
+
+
+    @PutMapping(path = "/changePassword")
+    public ResponseEntity<?>  changePassword(@RequestBody  @Valid ChangePassword  request)
+    {
+
+        try {
+
+            return userService.changePassword(request);
+
+        }catch (Exception ex)
+        {
+            ex.printStackTrace();
+        }
+
+        return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+
+
+
+    }
 
 
 

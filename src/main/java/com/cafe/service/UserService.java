@@ -5,12 +5,14 @@ import com.cafe.constent.CafeConstents;
 import com.cafe.dao.UserRepository;
 import com.cafe.jwt.*;
 
-import com.cafe.mapper.UserMapper;
+import com.cafe.mapper.ChangePassword;
+import com.cafe.mapper.UserMapperImp;
 import com.cafe.pojo.User;
 import com.cafe.utils.CafeUtils;
 
+import com.cafe.utils.EmailUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,8 +20,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
+
+
 
 
 @Slf4j
@@ -40,6 +44,9 @@ public class UserService {
 
     @Autowired
     AuthenticationManager authenticationManager;
+
+    @Autowired
+    EmailUtil emailUtil;
 
 
    @Autowired
@@ -189,12 +196,12 @@ public class UserService {
                   if(jwtFilter.isAdmin()){
                       return  new ResponseEntity<>(
 
-                              UserMapper.INSTANCE.toUserResponseList(userRepository.findAll())
+                             new  UserMapperImp().toUserResponseList(userRepository.findAll())
 
 
                               ,HttpStatus.OK);
                   }else {
-                      return  CafeUtils.getResponseEntity("Not Permitted to access:",HttpStatus.FORBIDDEN);
+                      return  CafeUtils.getResponseEntity( CafeConstents.UN_AUTHORIZED_ACCESS,HttpStatus.FORBIDDEN);
                   }
 
             }catch (Exception  ex)
@@ -213,11 +220,118 @@ public class UserService {
           try
           {
 
+              if(jwtFilter.isAdmin())
+              {
+                   Optional<User> existUser = userRepository.findById(id);
+
+                   if(existUser.isPresent())
+                   {
+
+
+
+
+                        existUser.get().setStatus(status);
+
+
+                       User updatedUser = userRepository.save(existUser.get());
+                       if(updatedUser.getStatus().equalsIgnoreCase("true"))
+                       {
+
+                           emailUtil.SendMail(existUser.get().getEmail() ,jwtFilter.getCurrentUser(),true,getAllAdmin( ));
+
+
+                           return  CafeUtils.getResponseEntity("Your Account is Activated by  "+jwtFilter.getCurrentUser(),HttpStatus.OK);
+
+
+                       }else {
+
+                           emailUtil.SendMail(existUser.get().getEmail() , jwtFilter.getCurrentUser(),false ,getAllAdmin( ));
+
+                           return  CafeUtils.getResponseEntity("Your Account is deActivated by   "+jwtFilter.getCurrentUser(),HttpStatus.OK);
+
+                       }
+
+
+                   }
+
+              }else {
+
+                  return  CafeUtils.getResponseEntity(CafeConstents.UN_AUTHORIZED_ACCESS,HttpStatus.BAD_REQUEST);
+              }
+
+
+
           }catch (Exception ex)
           {
               ex.printStackTrace();
           }
-        return  CafeUtils.getResponseEntity(CafeConstents.UN_AUTHORIZED_ACCESS,HttpStatus.UNAUTHORIZED);
+        return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+
+    }
+
+    private List<String> getAllAdmin( ) {
+
+
+        List<User>  allAdminUserInDB = userRepository.findByRole("ADMIN");
+        List<String>  alladminUser  = new ArrayList<>();
+
+        for(User user : allAdminUserInDB)
+        {
+            alladminUser.add(user.getEmail());
+        }
+
+
+
+        return  alladminUser;
+
+    }
+
+
+    public ResponseEntity<?> changePassword(ChangePassword request) {
+
+        try
+        {
+            User user = userRepository.findByEmail(jwtFilter.getCurrentUser());
+
+            if(!user.equals(null))
+            {
+
+
+
+                System.out.print(request.getOldPassword());
+
+
+                if(passwordEncoder.getPasswordEncoder().matches(request.getOldPassword(), user.getPassword()))
+                {
+
+                    user.setPassword(passwordEncoder.getPasswordEncoder().encode(request.getNewPassword()));
+                    userRepository.save(user);
+
+
+                    return  CafeUtils.getResponseEntity("password Successfully updated",HttpStatus.OK);
+
+
+
+
+                }else {
+
+                    return  CafeUtils.getResponseEntity("OldPassword is incorrect",HttpStatus.BAD_REQUEST);
+                }
+
+
+
+            }else {
+                return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.BAD_REQUEST);
+            }
+
+        }catch (Exception ex)
+            {
+                ex.printStackTrace();
+
+            }
+
+        return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+
 
     }
 }
