@@ -6,13 +6,15 @@ import com.cafe.dao.UserRepository;
 import com.cafe.jwt.*;
 
 import com.cafe.mapper.ChangePassword;
+import com.cafe.mapper.ForgotPassword;
 import com.cafe.mapper.UserMapperImp;
 import com.cafe.pojo.User;
 import com.cafe.utils.CafeUtils;
 
 import com.cafe.utils.EmailUtil;
 import lombok.extern.slf4j.Slf4j;
- import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -331,6 +333,44 @@ public class UserService {
             }
 
         return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+
+
+    }
+
+    public ResponseEntity<?> forgotPassword(ForgotPassword forgotPassword) {
+
+        try {
+
+
+            User  user = userRepository.findByEmail(forgotPassword.getEmail());
+            if(Objects.nonNull(user) && Strings.isNotEmpty(user.getEmail()))
+            {
+
+
+                emailUtil.sendForgotPassword(user.getEmail(),user.);
+
+                return  CafeUtils.getResponseEntity("Credential is sent to email "+ user.getEmail() +"  please check your email",HttpStatus.BAD_REQUEST);
+
+
+
+
+            }else {
+
+
+                return  CafeUtils.getResponseEntity("Email is not Registered",HttpStatus.BAD_REQUEST);
+
+            }
+
+
+
+
+        }catch (Exception ex)
+        {
+            ex.printStackTrace();
+        }
+
+        return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+
 
 
     }

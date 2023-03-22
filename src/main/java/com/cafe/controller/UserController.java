@@ -4,6 +4,7 @@ package com.cafe.controller;
 import com.cafe.constent.CafeConstents;
 import com.cafe.jwt.JwtUtil;
 import com.cafe.mapper.ChangePassword;
+import com.cafe.mapper.ForgotPassword;
 import com.cafe.service.UserService;
 import com.cafe.utils.CafeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -143,6 +144,32 @@ public class UserController {
         }catch (Exception ex)
         {
             ex.printStackTrace();
+        }
+
+        return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
+
+
+
+    }
+
+
+    //changePassword end
+
+
+
+    //forgot password
+
+
+    public   ResponseEntity<?>  forgotPassword(@RequestBody  @Valid ForgotPassword forgotPassword)
+    {
+        try {
+                 userService.forgotPassword(forgotPassword);
+        }
+        catch (Exception ex)
+        {
+
+            ex.printStackTrace();
+
         }
 
         return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
