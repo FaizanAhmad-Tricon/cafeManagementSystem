@@ -3,13 +3,13 @@ package com.cafe.service;
 
 import com.cafe.constent.CafeConstents;
 import com.cafe.dao.UserRepository;
-import com.cafe.jwt.*;
-import com.cafe.mapper.ChangePassword;
-import com.cafe.mapper.ForgotPassword;
-import com.cafe.mapper.UserMapperImp;
 import com.cafe.entity.User;
+import com.cafe.jwt.*;
+import com.cafe.mapper.UserMapperImp;
 import com.cafe.utils.CafeUtils;
 import com.cafe.utils.EmailUtil;
+import com.cafe.utils.OtpUtil;
+import com.cafe.wrapper.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +20,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import javax.mail.MessagingException;
 import java.util.*;
 
 
@@ -52,6 +53,9 @@ public class UserService {
 
     @Autowired
     JwtUtil jwtUtil;
+
+    @Autowired
+    OtpUtil otpUtil;
 
     //Signup
     public ResponseEntity<String> signUp(Map<String, String> requestMap) {
@@ -119,11 +123,11 @@ public class UserService {
 
 
     //login
-    public ResponseEntity<?> login(Map<String, String> requestMap) {
+    public ResponseEntity<?> login(LoginRequest requestMap) {
 
 
         try {
-            Authentication auth = securityConfig.authenticationManagerBean().authenticate(new UsernamePasswordAuthenticationToken(requestMap.get("email"), requestMap.get("password")));
+            Authentication auth = securityConfig.authenticationManagerBean().authenticate(new UsernamePasswordAuthenticationToken(requestMap.getEmail(), requestMap.getPassword()));
             if (auth.isAuthenticated()) {
 
                 System.out.print(customerUserDetailsService.getUserDetail().getStatus());
@@ -285,19 +289,22 @@ public class UserService {
 
     }
 
-    public ResponseEntity<?> forgotPassword(ForgotPassword forgotPassword) {
+    public ResponseEntity<String> generateOtp(ForgotPassword forgotPassword) throws MessagingException {
 
         try {
 
 
             User user = userRepository.findByEmail(forgotPassword.getEmail());
-            if (Objects.nonNull(user) && Strings.isNotEmpty(user.getEmail())) {
+            if (!Objects.isNull(user) && Strings.isNotEmpty(user.getEmail())) {
 
+
+                String otp = otpUtil.generateOtp(forgotPassword.getEmail());
 
                 //error in this section
-                emailUtil.sendForgotPassword(user.getEmail(), user.getPassword());
+                emailUtil.sendOtpToEmail(user.getEmail(), otp);
+                System.out.print("Inside Serive generate otp");
 
-                return CafeUtils.getResponseEntity("Credential is sent to email " + user.getEmail() + "  please check your email", HttpStatus.BAD_REQUEST);
+                return  new ResponseEntity<>("OTP  sent to Registered email    please check your email", HttpStatus.OK);
 
 
             } else {
@@ -314,6 +321,52 @@ public class UserService {
 
         return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
+
+    }
+
+
+    public ResponseEntity<?> verifyOtp(OtpVerifyWrapper otp) {
+
+
+        try {
+
+            if (otp.getOtp().equals(null)) {
+                return CafeUtils.getResponseEntity("please enter OTP", HttpStatus.BAD_REQUEST);
+            } else {
+
+                User user = userRepository.findByEmail(otp.getEmail());
+                if (!Objects.isNull(user))
+                {
+                    OtpVerifyResponse otpVerifyResponse = new OtpVerifyResponse();
+                    if(otpUtil.verifyOtp(otp.getOtp(),otp.getEmail()))
+                    {
+
+                        otpVerifyResponse.setMessage("OTP Is Verified");
+                        otpVerifyResponse.setStatus("true");
+                        return  new ResponseEntity<>(otpVerifyResponse,HttpStatus.OK);
+
+                    }else {
+
+                        otpVerifyResponse.setMessage("OTP Is not Verified");
+                        otpVerifyResponse.setStatus("false");
+                        return  new ResponseEntity<>(otpVerifyResponse,HttpStatus.BAD_REQUEST);
+                    }
+
+
+
+
+                }
+                else {
+                    return CafeUtils.getResponseEntity("Enter Valid Email", HttpStatus.BAD_REQUEST);
+                }
+            }
+
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 }

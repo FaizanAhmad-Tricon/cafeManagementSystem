@@ -39,7 +39,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
 
 
-        if(request.getServletPath().matches("/user/signup|/user/token|/user/login|/user/forgetPassword"))
+        if(request.getServletPath().matches("/user/signup|/user/token|/user/login|/user/forgetPassword|/user/otp|/user/optVerify"))
         {
             filterChain.doFilter(request,response);
         }

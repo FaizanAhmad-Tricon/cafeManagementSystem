@@ -7,6 +7,7 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -23,7 +24,7 @@ public class User implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "UserId",nullable = false)
 
 
     private Integer id ;
@@ -54,6 +55,15 @@ public class User implements Serializable {
 
     @Column(name = "status")
     private String status;
+
+
+
+    @Column(name = "oneTimePassword")
+    private String oneTimePassword;
+
+
+    @Column(name = "otpGenerationTime")
+    private Date  otpGenerationTime;
 
 
 

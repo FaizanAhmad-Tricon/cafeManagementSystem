@@ -1,6 +1,7 @@
 package com.cafe.utils;
 
 
+import com.cafe.dao.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.mail.SimpleMailMessage;
@@ -19,6 +20,9 @@ public class EmailUtil {
 
     @Autowired
     JavaMailSender emailSender;
+
+    @Autowired
+    UserRepository userRepository;
 
 
 
@@ -79,16 +83,21 @@ public class EmailUtil {
 
 
 
-    public void sendForgotPassword(String to , String password ) throws MessagingException {
+    public void sendOtpToEmail(String to , String otp ) throws MessagingException {
 
+
+
+
+        String userName = userRepository.findByEmail(to).getName();
         MimeMessage message =  emailSender.createMimeMessage();
 
         MimeMessageHelper helper = new MimeMessageHelper(message,true);
         helper.setTo(to);
         helper.setFrom("faizanahmad9576808817@gmail.com");
-        helper.setSubject("forgot password Credenrtial");
-        String text =  "<h2> Your Credential</h2> <p>Email :" + to+ "<br><br> password :"+ password +" <br> <br> <a href='http://localhost:8081/user/login'> Click here to login<a></p>";
-        message.setContent(text,"text/html");
+        helper.setSubject("forgot password Credential");
+        String text ="<h3>OTP</h3> <p> Hi </p>  "+userName+",<br><p>you have initiated OTP , Please use it within 5 minutes otherwise it will expire</p>"+
+                "Your OTP   :  "+ otp;
+         message.setContent(text,"text/html");
 
         emailSender.send(message);
 

@@ -25,6 +25,7 @@ public class Category implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "categoryId",nullable = false)
     private   Integer id;
 
 

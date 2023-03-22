@@ -3,8 +3,10 @@ package com.cafe.controller;
 
 import com.cafe.constent.CafeConstents;
 import com.cafe.jwt.JwtUtil;
-import com.cafe.mapper.ChangePassword;
-import com.cafe.mapper.ForgotPassword;
+import com.cafe.wrapper.LoginRequest;
+import com.cafe.wrapper.OtpVerifyWrapper;
+import com.cafe.wrapper.ChangePassword;
+import com.cafe.wrapper.ForgotPassword;
 import com.cafe.service.UserService;
 import com.cafe.utils.CafeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
 import javax.validation.Valid;
 import java.security.Principal;
 import java.util.Map;
@@ -61,7 +64,7 @@ public class UserController {
 
 
     @PostMapping(path = "/login")
-    public ResponseEntity<?> login(@RequestBody(required = true) Map<String,String> requestMap)
+    public ResponseEntity<?> login(@RequestBody(required = true) LoginRequest requestMap)
     {
 
         try {
@@ -160,10 +163,12 @@ public class UserController {
     //forgot password
 
 
-    public   ResponseEntity<?>  forgotPassword(@RequestBody  @Valid ForgotPassword forgotPassword)
+
+    @PostMapping(path = "/otp")
+    public   ResponseEntity<String>  generateOtp(@RequestBody  @Valid ForgotPassword forgotPassword)throws MessagingException
     {
         try {
-                 userService.forgotPassword(forgotPassword);
+                 userService.generateOtp(forgotPassword);
         }
         catch (Exception ex)
         {
@@ -174,6 +179,28 @@ public class UserController {
 
         return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
 
+
+
+    }
+
+
+
+    @PostMapping(path = "/optVerify")
+    public ResponseEntity<?>  verifyOtp(@RequestBody OtpVerifyWrapper otp)
+    {
+
+
+        try
+        {
+
+           return  userService.verifyOtp(otp);
+
+        }catch (Exception ex)
+        {
+            ex.printStackTrace();
+        }
+
+        return  CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
 
 
     }

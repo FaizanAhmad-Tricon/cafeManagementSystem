@@ -1,4 +1,4 @@
-package com.cafe.mapper;
+package com.cafe.wrapper;
 
 
 import lombok.AllArgsConstructor;
