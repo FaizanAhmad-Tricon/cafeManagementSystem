@@ -2,6 +2,7 @@ package com.cafe.entity;
 
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
@@ -17,15 +18,20 @@ import java.io.Serializable;
 @Table(name = "category")
 @DynamicUpdate
 @DynamicInsert
+
+@Builder
+
+@NamedQuery(name = "Category.getAllCategory", query = "select c from Category c where c.id in (select p.category from Product p where p.status='true')")
+
 public class Category implements Serializable {
 
-    private static final long  serial_ID= 1L ;
+    public  static final long  serial_ID= 1L ;
 
 
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "categoryId",nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id",nullable = false)
     private   Integer id;
 
 

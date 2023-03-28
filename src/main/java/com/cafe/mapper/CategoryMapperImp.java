@@ -1,9 +1,10 @@
 package com.cafe.mapper;
 
 import com.cafe.entity.Category;
+import com.cafe.wrapper.CategoryRequest;
+import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
+@Service
 public class CategoryMapperImp implements  CategoryMapper{
 
     @Override

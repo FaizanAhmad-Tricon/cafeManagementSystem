@@ -1,6 +1,7 @@
 package com.cafe.mapper;
 
 import com.cafe.entity.User;
+import com.cafe.wrapper.CategoryRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,8 +11,8 @@ public class UserMapperImp implements  UserMapper
 {
 
     @Override
-    public UserResponse toUserResponse(User user) {
-         UserResponse  userResponse = new UserResponse();
+    public CategoryRequest.UserResponse toUserResponse(User user) {
+         CategoryRequest.UserResponse userResponse = new CategoryRequest.UserResponse();
          userResponse.setId(user.getId());
          userResponse.setName(user.getName());
          userResponse.setStatus(user.getStatus());
@@ -24,8 +25,8 @@ public class UserMapperImp implements  UserMapper
     }
 
     @Override
-    public List<UserResponse> toUserResponseList(List<User> all) {
-        List<UserResponse>  userResponseList = new ArrayList<>();
+    public List<CategoryRequest.UserResponse> toUserResponseList(List<User> all) {
+        List<CategoryRequest.UserResponse>  userResponseList = new ArrayList<>();
 
         for (User user: all)
         {

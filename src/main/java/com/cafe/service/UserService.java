@@ -58,31 +58,25 @@ public class UserService {
     OtpUtil otpUtil;
 
     //Signup
-    public ResponseEntity<String> signUp(Map<String, String> requestMap) {
+    public ResponseEntity<String> signUp(SignUpRequest requestMap) {
 
 
         try {
 
-            if (ValidateSignUpMap(requestMap)) {
 
+            User user = userRepository.findByEmail(requestMap.getEmail());
+            if (Objects.isNull(user)) {
 
-                User user = userRepository.findByEmail(requestMap.get("email"));
-                if (Objects.isNull(user)) {
+                userRepository.save(getUser(requestMap));
 
-                    userRepository.save(getUserFromMap(requestMap));
-
-                    return CafeUtils.getResponseEntity("Successfully Registered", HttpStatus.OK
-                    );
-
-
-                } else {
-                    return CafeUtils.getResponseEntity("Email already Exist", HttpStatus.BAD_REQUEST);
-                }
+                return CafeUtils.getResponseEntity("Successfully Registered", HttpStatus.OK
+                );
 
 
             } else {
-                return CafeUtils.getResponseEntity(CafeConstents.INVALID_DATA, HttpStatus.BAD_REQUEST);
+                return CafeUtils.getResponseEntity("Email already Exist", HttpStatus.BAD_REQUEST);
             }
+
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -95,24 +89,24 @@ public class UserService {
     }
 
 
-    private boolean ValidateSignUpMap(Map<String, String> requestMap) {
+//    private boolean ValidateSignUpMap(Map<String, String> requestMap) {
+//
+//
+//        return requestMap.containsKey("name") && requestMap.containsKey("email")
+//                && requestMap.containsKey("password") && requestMap.containsKey("contactNumber")
+//                ? true : false;
+//
+//
+//    }
 
 
-        return requestMap.containsKey("name") && requestMap.containsKey("email")
-                && requestMap.containsKey("password") && requestMap.containsKey("contactNumber")
-                ? true : false;
-
-
-    }
-
-
-    private User getUserFromMap(Map<String, String> requestMap) {
+    private User getUser(SignUpRequest requestMap) {
         User user = new User();
-        user.setName(requestMap.get("name"));
-        user.setEmail(requestMap.get("email"));
-        user.setRole(requestMap.get("role"));
-        user.setPassword(passwordEncoder.getPasswordEncoder().encode(requestMap.get("password")));
-        user.setContactNumber(requestMap.get("contactNumber"));
+        user.setName(requestMap.getName());
+        user.setEmail(requestMap.getEmail());
+        user.setRole("USER");
+        user.setPassword(passwordEncoder.getPasswordEncoder().encode(requestMap.getPassword()));
+        user.setContactNumber(requestMap.getContactNumber());
         user.setStatus("false");
 
         return user;
@@ -289,6 +283,7 @@ public class UserService {
 
     }
 
+
     public ResponseEntity<String> generateOtp(ForgotPassword forgotPassword) throws MessagingException {
 
         try {
@@ -304,13 +299,12 @@ public class UserService {
                 emailUtil.sendOtpToEmail(user.getEmail(), otp);
                 System.out.print("Inside Serive generate otp");
 
-                return  new ResponseEntity<>("OTP  sent to Registered email    please check your email", HttpStatus.OK);
-
+                return CafeUtils.getResponseEntity("OTP  sent to  email  " + user.getEmail() + "   please check your email", HttpStatus.OK);
 
             } else {
 
 
-                return CafeUtils.getResponseEntity("Email is not Registered", HttpStatus.BAD_REQUEST);
+                return CafeUtils.getResponseEntity(user.getEmail() + " email is not Registered", HttpStatus.BAD_REQUEST);
 
             }
 
@@ -335,28 +329,23 @@ public class UserService {
             } else {
 
                 User user = userRepository.findByEmail(otp.getEmail());
-                if (!Objects.isNull(user))
-                {
+                if (!Objects.isNull(user)) {
                     OtpVerifyResponse otpVerifyResponse = new OtpVerifyResponse();
-                    if(otpUtil.verifyOtp(otp.getOtp(),otp.getEmail()))
-                    {
+                    if (otpUtil.verifyOtp(otp.getOtp(), otp.getEmail())) {
 
                         otpVerifyResponse.setMessage("OTP Is Verified");
                         otpVerifyResponse.setStatus("true");
-                        return  new ResponseEntity<>(otpVerifyResponse,HttpStatus.OK);
+                        return new ResponseEntity<>(otpVerifyResponse, HttpStatus.OK);
 
-                    }else {
+                    } else {
 
                         otpVerifyResponse.setMessage("OTP Is not Verified");
                         otpVerifyResponse.setStatus("false");
-                        return  new ResponseEntity<>(otpVerifyResponse,HttpStatus.BAD_REQUEST);
+                        return new ResponseEntity<>(otpVerifyResponse, HttpStatus.BAD_REQUEST);
                     }
 
 
-
-
-                }
-                else {
+                } else {
                     return CafeUtils.getResponseEntity("Enter Valid Email", HttpStatus.BAD_REQUEST);
                 }
             }
@@ -369,4 +358,41 @@ public class UserService {
         return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
+
+    public ResponseEntity<String> setPasswordAfterOptIsVerrified(Map<String, String> request) {
+
+
+        try {
+
+
+            if (request.get("email") == null) {
+
+                return CafeUtils.getResponseEntity("Please enter Gmail", HttpStatus.BAD_REQUEST);
+            } else if (request.get("newPassword") == null) {
+                return CafeUtils.getResponseEntity("Please enter new Password Field", HttpStatus.BAD_REQUEST);
+            }
+
+            User user = userRepository.findByEmail(request.get("email"));
+            if (!Objects.isNull(user)) {
+
+                user.setPassword(passwordEncoder.getPasswordEncoder().encode(request.get("newPassword")));
+                userRepository.save(user);
+                return CafeUtils.getResponseEntity("Your password is updated", HttpStatus.OK);
+
+
+            } else {
+                return CafeUtils.getResponseEntity("Please enter valid Email", HttpStatus.BAD_REQUEST);
+
+
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+
+        return CafeUtils.getResponseEntity(CafeConstents.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+
+    }
+
+
 }

@@ -2,6 +2,7 @@ package com.cafe.mapper;
 
 
 import com.cafe.entity.User;
+import com.cafe.wrapper.CategoryRequest;
 
 import java.util.List;
 
@@ -10,10 +11,10 @@ public interface UserMapper {
 
 
 
-    UserResponse  toUserResponse(User user);
+    CategoryRequest.UserResponse toUserResponse(User user);
 
 
-     List<UserResponse> toUserResponseList(List<User> all);
+     List<CategoryRequest.UserResponse> toUserResponseList(List<User> all);
 
 
 
